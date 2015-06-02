@@ -24,7 +24,7 @@ setup(
     author_email='das@birc.au.dk',
     description='A transmembrane helix finder.',
     url='https://github.com/dansondergaard/tmhmm.py/',
-    install_requires=['scikit-bio>=0.2', 'numpy>=1.9'],
+    install_requires=['scikit-bio>=0.2', 'numpy>=1.9', 'future>=0.14.3'],
     packages=find_packages(),
     scripts=['scripts/tmhmm'],
     ext_modules=extensions,

@@ -74,15 +74,16 @@ def viterbi(sequence,
 
 
 @cython.boundscheck(False)
-def forward(sequence,
+def forward(sequence, 
+	    map_from_index_to_transition_matrix,
             np.ndarray[DTYPE_t, ndim=1] initial,
-            np.ndarray[DTYPE_t, ndim=2] transitions,
+            np.ndarray[DTYPE_t, ndim=3] transitions,
             np.ndarray[DTYPE_t, ndim=2] emissions,
             char_map, label_map, name_map):
     """
     Compute the probability distribution of states after observing the sequence.
 
-    This function implements the scaled Forward algorithm.
+    This function implements the scaled Forward algorithm with a heteregenous hidden state space.
 
     :param sequence str: a string over the alphabet specified by the model.
     :rtype: tuple(matrix, constants)
@@ -111,11 +112,63 @@ def forward(sequence,
 
     for i in range(1, no_observations):
         observation = char_map[sequence[i]]
+        transition_index = map_from_index_to_transition_matrix(i)
         for j in range(no_states):
             state_sum = 0.0
             for k in range(no_states):
-                state_sum += M[(i - 1), k] * transitions[k, j]
+                state_sum += M[(i - 1), k] * transitions[transition_index, k, j]
             M[i, j] = state_sum * emissions[j, observation]
+        constants[i] = np.sum(M[i])
+        M[i] = M[i] / constants[i]
+
+    return M, constants
+
+@cython.boundscheck(False)
+def forward2(sequence, 
+            np.ndarray[DTYPE_t, ndim=1] initial,
+            transition_generator,
+            emission_generator,
+            char_map, label_map, name_map):
+    """
+    Compute the probability distribution of states after observing the sequence.
+
+    This function implements the scaled Forward algorithm with a heteregenous hidden state space.
+
+    :param sequence str: a string over the alphabet specified by the model.
+    :rtype: tuple(matrix, constants)
+    :return: the scaled dynamic programming table and the constants used to
+             normalize it.
+    """
+
+    sequence = sequence.upper()
+
+    cdef int no_observations = len(sequence)
+    cdef int no_states = len(initial)
+
+    cdef np.ndarray[DTYPE_t, ndim=2] M = \
+        np.zeros([no_observations, no_states], dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=1] constants = \
+        np.zeros(no_observations, dtype=DTYPE)
+
+    cdef unsigned int i, j, k, observation
+    cdef double prob, state_sum
+
+    observation = char_map[sequence[0]]
+    emission=emission_generator(0)
+    for i in range(no_states):
+        M[0, i] = initial[i] * emission[i, observation]
+    constants[0] = np.sum(M[0])
+    M[0] = M[0] / constants[0]
+
+    for i in range(1, no_observations):
+        observation = char_map[sequence[i]]
+        transition = transition_generator(i)
+        emission=emission_generator(i)
+        for j in range(no_states):
+            state_sum = 0.0
+            for k in range(no_states):
+                state_sum += M[(i - 1), k] * transition[k, j]
+            M[i, j] = state_sum * emission[j, observation]
         constants[i] = np.sum(M[i])
         M[i] = M[i] / constants[i]
 

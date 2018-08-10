@@ -12,7 +12,7 @@ except Exception:
 
 ext = '.pyx' if USE_CYTHON else '.c'
 
-extensions = [Extension("tmhmm.hmm", ["tmhmm/hmm" + ext])]
+extensions = [Extension("tmhmm.hmm", ["tmhmm/hmm" + ext], include_dirs = [numpy.get_include()])]
 
 if USE_CYTHON:
     extensions = cythonize(extensions)
@@ -20,7 +20,7 @@ if USE_CYTHON:
 setup(
     name='tmhmm.py',
     version='1.0',
-    author='Dan Søndergaard',
+    author='Dan Sondergaard',
     author_email='das@birc.au.dk',
     description='A transmembrane helix finder.',
     url='https://github.com/dansondergaard/tmhmm.py/',

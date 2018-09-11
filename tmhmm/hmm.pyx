@@ -264,7 +264,7 @@ def backward2(sequence,
             for k in range(no_states):
                 state_sum += M[(i + 1), k] * transition[j, k]
             M[i, j] = state_sum * emission[j, observation]
-            M[i] = M[i] / constants[i]
+        M[i] = M[i] / constants[i]
     return M
 
 @cython.boundscheck(False)
@@ -311,7 +311,7 @@ def backward2log(sequence,
             for k in range(no_states):
                 state_sum[0,k] = M[(i + 1), k] +np.log( transition[j, k])
             M[i, j] = scipy.misc.logsumexp(state_sum)+log_emission[j,observation]
-            M[i] = M[i] - log_constants[i]
+        M[i] = M[i] - log_constants[i]
     return M
 
 @cython.boundscheck(False)
